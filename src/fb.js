@@ -68,19 +68,19 @@ var {version} = require('../package.json'),
 		});
 	},
 	buildBusinessUseCaseRateLimitObjectFromJson = function(businessUseCaseUsage) {
-		return Object.fromEntries(Object.toEntries(businessUseCaseUsage).map(([accId, {
+		return Object.fromEntries(Object.entries(businessUseCaseUsage).map(([accId, rates]) => ([accId, rates.map(({
 			type,
 			call_count: callCount,
 			total_time: totalTime,
 			total_cputime: totalCPUTime,
 			estimated_time_to_regain_access: estimatedTimeToRegainAccess,
-		}]) => ([accId, {
+		}) => ({
 			type,
 			callCount,
 			totalTime,
 			totalCPUTime,
 			estimatedTimeToRegainAccess,
-		}])));
+		}))])));
 	},
 	stringifyParams = function(params) {
 		var data = {};
@@ -456,7 +456,7 @@ class Facebook {
 					this._pageUsage = emptyRateLimit;
 				}
 
-				let businessUseCaseUsage = parseResponseHeaderPageUsage(response.headers);
+				let businessUseCaseUsage = parseResponseHeaderBusinessUseCaseUsage(response.headers);
 				if ( businessUseCaseUsage !== null ) {
 					this._businessUseCaseUsage = buildBusinessUseCaseRateLimitObjectFromJson(businessUseCaseUsage);
 				} else {
