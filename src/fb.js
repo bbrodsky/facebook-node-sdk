@@ -54,12 +54,33 @@ var {version} = require('../package.json'),
 		}
 		return JSON.parse(header['x-page-usage']);
 	},
+	parseResponseHeaderBusinessUseCaseUsage = function(header) {
+		if ( !has(header, 'x-business-use-case-usage') ) {
+			return null;
+		}
+		return JSON.parse(header['x-business-use-case-usage']);
+	},
 	buildRateLimitObjectFromJson = function(rateLimit) {
 		return Object.assign(Object.create(null), {
 			callCount: rateLimit['call_count'],
 			totalTime: rateLimit['total_time'],
 			totalCPUTime: rateLimit['total_cputime']
 		});
+	},
+	buildBusinessUseCaseRateLimitObjectFromJson = function(businessUseCaseUsage) {
+		return Object.fromEntries(Object.toEntries(businessUseCaseUsage).map(([accId, {
+			type,
+			call_count: callCount,
+			total_time: totalTime,
+			total_cputime: totalCPUTime,
+			estimated_time_to_regain_access: estimatedTimeToRegainAccess,
+		}]) => ([accId, {
+			type,
+			callCount,
+			totalTime,
+			totalCPUTime,
+			estimatedTimeToRegainAccess,
+		}])));
 	},
 	stringifyParams = function(params) {
 		var data = {};
@@ -158,6 +179,7 @@ class Facebook {
 
 		this._pageUsage = Object.create(emptyRateLimit);
 		this._appUsage = Object.create(emptyRateLimit);
+		this._businessUseCaseUsage = Object.create(emptyRateLimit);
 	}
 
 	/**
@@ -434,6 +456,13 @@ class Facebook {
 					this._pageUsage = emptyRateLimit;
 				}
 
+				let businessUseCaseUsage = parseResponseHeaderPageUsage(response.headers);
+				if ( businessUseCaseUsage !== null ) {
+					this._businessUseCaseUsage = buildBusinessUseCaseRateLimitObjectFromJson(businessUseCaseUsage);
+				} else {
+					this._businessUseCaseUsage = emptyRateLimit;
+				}
+
 				let json;
 				try {
 					json = JSON.parse(response.body);
@@ -622,6 +651,11 @@ class Facebook {
 	@autobind
 	getPageUsage() {
 		return this._pageUsage;
+	}
+
+	@autobind
+	getBusinessUseCaseUsage() {
+		return this._businessUseCaseUsage;
 	}
 
 	@autobind
