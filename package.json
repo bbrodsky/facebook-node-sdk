@@ -57,7 +57,7 @@
     "sinon-chai": "^2.14.0"
   },
   "engines": {
-    "node": ">=6"
+    "node": ">=12"
   },
   "lint-staged": {
     "*.js": [
